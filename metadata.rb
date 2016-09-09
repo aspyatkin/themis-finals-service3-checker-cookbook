@@ -1,6 +1,6 @@
 name 'themis-finals-service3-checker'
 description 'Installs and configures Themis Finals service3 checker'
-version '1.0.0'
+version '1.1.0'
 
 recipe 'themis-finals-service3-checker', 'Installs and configures Themis Finals service3 checker'
 depends 'latest-git', '~> 1.1.11'
@@ -12,3 +12,4 @@ depends 'themis-finals', '~> 1.1.15'
 depends 'php', '~> 1.10.1'
 depends 'composer', '~> 2.4.0'
 depends 'apt'
+depends 'ssh-private-keys', '~> 1.0.0'
