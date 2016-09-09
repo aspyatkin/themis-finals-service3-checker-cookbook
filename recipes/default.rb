@@ -71,6 +71,15 @@ if node.chef_environment.start_with? 'development'
   end
 end
 
+composer_project node[id]['basedir'] do
+  dev false
+  quiet false
+  prefer_dist false
+  user node[id]['user']
+  group node[id]['group']
+  action :install
+end
+
 logs_basedir = ::File.join node[id]['basedir'], 'logs'
 
 namespace = "#{node['themis-finals']['supervisor']['namespace']}.checker."\
