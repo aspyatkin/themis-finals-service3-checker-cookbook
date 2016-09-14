@@ -30,3 +30,7 @@ include_recipe 'composer::default'
 package 'php5.6-mcrypt' do
   action :install
 end
+
+package 'php5.6-curl' do
+  action :install
+end
