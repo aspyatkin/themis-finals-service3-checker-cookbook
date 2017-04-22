@@ -34,3 +34,15 @@ end
 package 'php5.6-curl' do
   action :install
 end
+
+package 'php5.6-zip' do
+  action :install
+end
+
+package 'php5.6-mbstring' do
+  action :install
+end
+
+package 'php5.6-gmp' do
+  action :install
+end

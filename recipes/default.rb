@@ -1,9 +1,6 @@
 id = 'themis-finals-service3-checker'
 
 include_recipe "#{id}::php56"
-include_recipe 'modern_nginx::default'
-include_recipe 'latest-redis::default'
-include_recipe 'supervisor::default'
 
 directory node[id]['basedir'] do
   owner node[id]['user']
@@ -29,19 +26,19 @@ git2 node[id]['basedir'] do
   action :create
 end
 
-if node.chef_environment.start_with? 'development'
+if node.chef_environment.start_with?('development')
   git_data_bag_item = nil
   begin
     git_data_bag_item = data_bag_item('git', node.chef_environment)
   rescue
-    ::Chef::Log.warn 'Check whether git data bag exists!'
+    ::Chef::Log.warn('Check whether git data bag exists!')
   end
 
   git_options = \
     if git_data_bag_item.nil?
       {}
     else
-      git_data_bag_item.to_hash.fetch 'config', {}
+      git_data_bag_item.to_hash.fetch('config', {})
     end
 
   git_options.each do |key, value|
@@ -65,7 +62,7 @@ composer_project node[id]['basedir'] do
   action :install
 end
 
-logs_basedir = ::File.join node[id]['basedir'], 'logs'
+logs_basedir = ::File.join(node[id]['basedir'], 'logs')
 
 namespace = "#{node['themis-finals']['supervisor_namespace']}.checker."\
             "#{node[id]['service_alias']}"
@@ -80,7 +77,7 @@ sentry_dsn = \
   if sentry_data_bag_item.nil?
     {}
   else
-    sentry_data_bag_item.to_hash.fetch 'dsn', {}
+    sentry_data_bag_item.to_hash.fetch('dsn', {})
   end
 
 checker_environment = {
@@ -118,12 +115,12 @@ supervisor_service "#{namespace}.server" do
   killasgroup true
   user node[id]['user']
   redirect_stderr false
-  stdout_logfile ::File.join logs_basedir, 'server-%(process_num)s-stdout.log'
+  stdout_logfile ::File.join(logs_basedir, 'server-%(process_num)s-stdout.log')
   stdout_logfile_maxbytes '10MB'
   stdout_logfile_backups 10
   stdout_capture_maxbytes '0'
   stdout_events_enabled false
-  stderr_logfile ::File.join logs_basedir, 'server-%(process_num)s-stderr.log'
+  stderr_logfile ::File.join(logs_basedir, 'server-%(process_num)s-stderr.log')
   stderr_logfile_maxbytes '10MB'
   stderr_logfile_backups 10
   stderr_capture_maxbytes '0'
@@ -154,19 +151,22 @@ supervisor_service "#{namespace}.queue" do
   killasgroup true
   user node[id]['user']
   redirect_stderr false
-  stdout_logfile ::File.join logs_basedir, 'queue-%(process_num)s-stdout.log'
+  stdout_logfile ::File.join(logs_basedir, 'queue-%(process_num)s-stdout.log')
   stdout_logfile_maxbytes '10MB'
   stdout_logfile_backups 10
   stdout_capture_maxbytes '0'
   stdout_events_enabled false
-  stderr_logfile ::File.join logs_basedir, 'queue-%(process_num)s-stderr.log'
+  stderr_logfile ::File.join(logs_basedir, 'queue-%(process_num)s-stderr.log')
   stderr_logfile_maxbytes '10MB'
   stderr_logfile_backups 10
   stderr_capture_maxbytes '0'
   stderr_events_enabled false
   environment checker_environment.merge(
     'THEMIS_FINALS_CHECKER_KEY' => \
-      data_bag_item('themis-finals', node.chef_environment)['keys']['checker']
+      data_bag_item('themis-finals', node.chef_environment)['keys']['checker'],
+    'THEMIS_FINALS_FLAG_SIGN_KEY_PUBLIC' => data_bag_item('themis-finals', node.chef_environment)['sign_key']['public'].gsub("\n", "\\n"),
+    'THEMIS_FINALS_FLAG_WRAP_PREFIX' => node['themis-finals']['flag_wrap']['prefix'],
+    'THEMIS_FINALS_FLAG_WRAP_SUFFIX' => node['themis-finals']['flag_wrap']['suffix']
   )
   directory node[id]['basedir']
   serverurl 'AUTO'
@@ -181,11 +181,8 @@ supervisor_group namespace do
   action :enable
 end
 
-ngx_conf_file = "themis-finals-checker-#{node[id]['service_alias']}.conf"
-
-template "#{node['nginx']['dir']}/sites-available/#{ngx_conf_file}" do
-  source 'nginx.conf.erb'
-  mode 0644
+nginx_site "themis-finals-checker-#{node[id]['service_alias']}" do
+  template 'nginx.conf.erb'
   variables(
     server_name: node[id]['fqdn'],
     service_name: node[id]['service_alias'],
@@ -194,8 +191,5 @@ template "#{node['nginx']['dir']}/sites-available/#{ngx_conf_file}" do
     server_port_start: node[id]['server']['port_range_start'],
     internal_networks: node['themis-finals']['config']['internal_networks']
   )
-  notifies :reload, 'service[nginx]', :delayed
-  action :create
+  action :enable
 end
-
-nginx_site ngx_conf_file
