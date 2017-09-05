@@ -3,8 +3,6 @@ id = 'themis-finals-service3-checker'
 default[id]['basedir'] = '/var/themis/finals/checker/service3'
 default[id]['github_repository'] = 'themis-project/themis-finals-service3-checker'
 default[id]['revision'] = 'master'
-default[id]['user'] = 'vagrant'
-default[id]['group'] = 'vagrant'
 
 default[id]['debug'] = false
 default[id]['service_alias'] = 'service3'
